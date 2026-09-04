@@ -1,5 +1,8 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const auth = require("../middleware/auth")
+require("dotenv").config();
 
 const register = async (req, res) => {
     const {username, email, password, password_again} = req.body;
@@ -26,4 +29,34 @@ const register = async (req, res) => {
     return res.send("siker")
 }
 
-module.exports = {register};
+const login = async (req, res) => {
+    const {username, password} = req.body;
+    console.log(username, password)
+    const [user] = await db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, username])
+    if (user.length != 0 && await bcrypt.compare(password, user[0].password)) {
+
+        const {password, ...userWithoutPassword} = user[0];
+        const token = jwt.sign({
+            user: userWithoutPassword,
+        }, process.env.TOKEN_SECRET, {expiresIn: process.env.TOKEN_EXPIRATION})
+
+        return res.status(200).json({
+            code: "LOGIN_SUCCESSUL",
+            message: "Sikeres bejelentkezés",
+            token: token
+        })
+    } else {
+        return res.status(401).json({
+            code: "INVALID_CREDENTIALS",
+            message: "Hibás email cím vagy jelszó" 
+        })
+    }
+}
+
+const user = (req, res) => {
+    res.status(200).json({
+        user: req.user,
+        code: "ACCESS_GRANTED"
+    })
+}
+module.exports = {register, login, user};

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<form id="loginForm">
+    <span id="errorMsg"></span>
+    <input id="username" name="username" type="text" placeholder="Felhasználónév">
+    
+
+    <input id="password" name="password" type="password" placeholder="Jelszó">
+
+    <button type="submit">Bejelentkezés</button>
+</form>
+</body>
+<script>
+    const form = document.getElementById("loginForm");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const errorMsg = document.getElementById("errorMsg");
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+    const response = await fetch("/api/login", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        username: usernameInput.value,
+        password: passwordInput.value
+    })
+});
+
+const data = await response.json();
+
+if (!response.ok) {
+    if (data.code === "INVALID_CREDENTIALS") {
+        usernameInput.classList.add("input-error");
+        passwordInput.classList.add("input-error");
+
+        errorMsg.textContent = data.message;
+        errorMsg.style.display = "block";
+    }
+
+    return;
+}
+localStorage.setItem("token", data.token)
+window.location.href = "/aks"
+
+    })
+</script>
+</html>
