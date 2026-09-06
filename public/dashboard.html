@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<div id="familyContainer"></div>
+<div id="transactionsContainer"></div>
+
+<dialog id="editFamilyModal">
+    <h2>Család módosítása</h2>
+
+    <label for="familyNameInput">Család neve</label>
+    <input type="text" id="familyNameInput">
+
+    <br><br>
+
+    <button onclick="closeModal('editFamilyModal')">Mégse</button>
+    <button onclick="saveFamily()">Mentés</button>
+</dialog>
+
+<dialog id="verify">
+    <h2>Biztosan törölni szeretnéd a családot?</h2>
+
+    <button onclick="closeModal('verify')">Mégse</button>
+    <button onclick="deleteFamily()">igen</button>
+</dialog>
+
+    <button onclick="logOut()">Kijelentkezés</button>
+
+    <script src="./dashboard.js"></script>
+
+</body>
+</html>

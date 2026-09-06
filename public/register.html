@@ -9,28 +9,31 @@
 <form id="loginForm">
     <span id="errorMsg"></span>
     <input id="username" name="username" type="text" placeholder="Felhasználónév">
-    
-
+    <input id="email" name="email" type="email" placeholder="Email cím">
     <input id="password" name="password" type="password" placeholder="Jelszó">
-
+    <input id="password_again" name="password_again" type="password" placeholder="Jelszó újra">        
     <button type="submit">Bejelentkezés</button>
 </form>
 </body>
 <script>
     const form = document.getElementById("loginForm");
     const usernameInput = document.getElementById("username");
+    const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
+     const passwordAgainInput = document.getElementById("password_again");
     const errorMsg = document.getElementById("errorMsg");
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-    const response = await fetch("/api/login", {
+    const response = await fetch("/api/register", {
     method: "POST",
     headers: {
         "Content-Type": "application/json"
     },
     body: JSON.stringify({
         username: usernameInput.value,
-        password: passwordInput.value
+        email: emailInput.value,
+        password: passwordInput.value,
+        password_again: passwordAgainInput.value
     })
 });
 
@@ -47,9 +50,7 @@ if (!response.ok) {
 
     return;
 }
-console.log(data.token)
-localStorage.setItem("token", data.token)
-window.location.href = "/dashboard"
+window.location.href = "/login" 
 
     })
 </script>

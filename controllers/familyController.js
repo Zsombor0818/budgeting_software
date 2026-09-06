@@ -39,7 +39,7 @@ const removeMember = async (req, res) => {
 }
 
 const familyData = async (req, res) => {
-    const { familyId } = req.body;
+    const familyId = req.user.familyId;
     const userId = req.user.id;
 
     const [family] = await db.query(

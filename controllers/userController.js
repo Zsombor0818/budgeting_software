@@ -32,7 +32,12 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const {username, password} = req.body;
     console.log(username, password)
-    const [user] = await db.query("SELECT * FROM users WHERE username = ? OR email = ?", [username, username])
+    const [user] = await db.query(`
+    SELECT users.*, family_members.familyId
+    FROM users
+    LEFT JOIN family_members ON users.id = family_members.userId
+    WHERE users.username = ? OR users.email = ?
+`, [username, username]);
     if (user.length != 0 && await bcrypt.compare(password, user[0].password)) {
 
         const {password, ...userWithoutPassword} = user[0];

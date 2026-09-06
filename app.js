@@ -15,4 +15,4 @@ app.use("/api", apiRouter);
 const publicRouter = require("./routes/publicRoutes");
 app.use("/", publicRouter)
 
-module.exports = app;
+module.exports = app; 
