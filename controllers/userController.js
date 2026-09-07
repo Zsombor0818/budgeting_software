@@ -30,38 +30,65 @@ const register = async (req, res) => {
 }
 
 const login = async (req, res) => {
-    const {username, password} = req.body;
-    console.log(username, password)
-    const [user] = await db.query(`
-    SELECT users.*, family_members.familyId
-    FROM users
-    LEFT JOIN family_members ON users.id = family_members.userId
-    WHERE users.username = ? OR users.email = ?
-`, [username, username]);
-    if (user.length != 0 && await bcrypt.compare(password, user[0].password)) {
+    const { username, password } = req.body;
 
-        const {password, ...userWithoutPassword} = user[0];
-        const token = jwt.sign({
-            user: userWithoutPassword,
-        }, process.env.TOKEN_SECRET, {expiresIn: process.env.TOKEN_EXPIRATION})
+    const [users] = await db.query(`
+        SELECT users.*
+        FROM users
+        WHERE users.username = ? OR users.email = ?
+    `, [username, username]);
+
+    if (
+        users.length !== 0 &&
+        await bcrypt.compare(password, users[0].password)
+    ) {
+        const token = jwt.sign(
+            {
+                userId: users[0].id
+            },
+            process.env.TOKEN_SECRET,
+            {
+                expiresIn: process.env.TOKEN_EXPIRATION
+            }
+        );
 
         return res.status(200).json({
-            code: "LOGIN_SUCCESSUL",
+            code: "LOGIN_SUCCESSFUL",
             message: "Sikeres bejelentkezés",
-            token: token
-        })
-    } else {
-        return res.status(401).json({
-            code: "INVALID_CREDENTIALS",
-            message: "Hibás email cím vagy jelszó" 
-        })
+            token
+        });
     }
-}
 
-const user = (req, res) => {
-    res.status(200).json({
-        user: req.user,
+    return res.status(401).json({
+        code: "INVALID_CREDENTIALS",
+        message: "Hibás email cím vagy jelszó"
+    });
+};
+
+const user = async (req, res) => {
+console.log(req.user.id)
+    const [users] = await db.query(`
+        SELECT 
+            users.id,
+            users.username,
+            users.email,
+            family_members.familyId
+        FROM users
+        LEFT JOIN family_members
+            ON users.id = family_members.userId
+        WHERE users.id = ?
+    `, [req.user.id]);
+
+    if (users.length === 0) {
+        return res.status(401).json({
+            code: "USER_NOT_FOUND",
+            message: "A felhasználó nem létezik."
+        });
+    }
+
+    return res.status(200).json({
+        user: users[0],
         code: "ACCESS_GRANTED"
-    })
-}
+    });
+};
 module.exports = {register, login, user};

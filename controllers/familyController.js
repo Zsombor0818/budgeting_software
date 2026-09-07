@@ -13,6 +13,7 @@ const deleteFamily = async (req, res) => {
     const {familyId} = req.body;
     const userId = req.user.id;
     const deleteFamily = await db.query("DELETE FROM families WHERE familyId = ? AND userId = ?", [familyId, userId])
+    const deleteMebers = await db.query("DELETE FROM family_members WHERE familyId = ? AND userId = ?", [familyId, userId])
  return res.status(200).json({message: "ok"})
 }
 

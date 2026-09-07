@@ -1,6 +1,8 @@
 const token = localStorage.getItem("token")
 console.log(token)
 let userData
+let joinAvailable
+let familyData
 
 if (!token) {
     window.location.href = "/login";
@@ -12,19 +14,30 @@ function logOut() {
 }
 
 async function init() {
-    userData = await getUserData()
-    showFamily()
-    showTransactions()
+    userData = await getUserData();
+
+    await showFamily();
+    await showTransactions();
+
+    if (familyData.family?.familyId) {
+        joinAvailable = false;
+    }
 }
 
 
 async function getUserData() {
-   const response = await fetch("/api/user", {
+    const response = await fetch("/api/user", {
         headers: {
             Authorization: `Bearer ${token}`
         }
-    
-    })
+    });
+
+    if (!response.ok) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return null;
+    }
+
     return await response.json();
 }
 
@@ -40,12 +53,14 @@ async function showFamily() {
         return;
     }
 
-    const familyData = await response.json();
+    familyData = await response.json();
 
     const family = familyData.family;
     const container = document.getElementById("familyContainer");
-
-    const isOwner = String(userData.user.id) === String(family.ownerId);
+    if (family?.ownerId) {
+const isOwner = String(userData.user.id) === String(family.ownerId);
+  
+    
 
     container.innerHTML = `
         <div class="family" style="border: 1px black solid">
@@ -72,14 +87,93 @@ async function showFamily() {
             }
         </div>
     `;
+      }
 }
 
 
 
 
+async function joinFamily() {
+     const modal = document.getElementById("joinFamily");
+    const input = document.getElementById("familyNameInput");
+    modal.showModal();
+}
+
+async function addUserToFamily() {
+    const familyId = $("#familyId").val();
+
+    const response = await fetch("/api/member", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            familyId: familyId
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.log(data);
+        return;
+    }
+
+    closeModal("joinFamily");
+
+    userData = await getUserData();
+    await showFamily();
+    await showTransactions();
+}
 
 
+async function saveFamily() {
+    const response = await fetch("/api/family", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            familyId: familyData.family.familyId,
+            familyName: $("#familyName").val()
+        })
+    });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.log(data);
+        return;
+    }
+
+    closeModal("editFamilyModal");
+    await showFamily();
+}
+
+async function deleteFamilyConfirmed() {
+     const response = await fetch("/api/family", {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            familyId: familyData.family.familyId,
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.log(data);
+        return;
+    }
+
+    closeModal("verify");
+    await init();
+} 
 
 
 async function showTransactions() {

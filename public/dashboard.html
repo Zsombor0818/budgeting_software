@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
     <title>Document</title>
 </head>
 <body>
@@ -13,7 +14,7 @@
     <h2>Család módosítása</h2>
 
     <label for="familyNameInput">Család neve</label>
-    <input type="text" id="familyNameInput">
+    <input type="text" id="familyName">
 
     <br><br>
 
@@ -25,8 +26,17 @@
     <h2>Biztosan törölni szeretnéd a családot?</h2>
 
     <button onclick="closeModal('verify')">Mégse</button>
-    <button onclick="deleteFamily()">igen</button>
+    <button onclick="deleteFamilyConfirmed()">igen</button>
 </dialog>
+
+<dialog id="joinFamily">
+    <h2>Add meg a család azonosítóját:</h2>
+    <input type="number" id="familyId">
+    <button onclick="closeModal('joinFamily')">Mégse</button>
+    <button onclick="addUserToFamily()">Csatlakozás</button>
+</dialog>
+
+<button onclick="joinFamily()">Csatlakozás családhoz</button>
 
     <button onclick="logOut()">Kijelentkezés</button>
 
