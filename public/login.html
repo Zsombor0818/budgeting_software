@@ -1,56 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Közös Kassza – Bejelentkezés</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-<form id="loginForm">
-    <span id="errorMsg"></span>
-    <input id="username" name="username" type="text" placeholder="Felhasználónév">
-    
-
-    <input id="password" name="password" type="password" placeholder="Jelszó">
-
-    <button type="submit">Bejelentkezés</button>
-</form>
+<body data-page="login">
+<div class="auth">
+  <aside class="auth-side">
+    <div class="brand"><i><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h14a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"/><path d="M4 7l11-3v3"/></svg></i>Közös Kassza</div>
+    <div><h2>Üdv újra!</h2><p>Bevételek és kiadások egy helyen, a családod minden tagjával.</p></div>
+    <small>Költségvetéskészítő webalkalmazás</small>
+  </aside>
+  <main class="auth-main">
+    <form class="auth-form" id="authForm" novalidate>
+      <h1>Bejelentkezés</h1>
+      <p class="err" id="errorMsg" role="alert"></p>
+      <label>Felhasználónév vagy email<input id="username" name="username" type="text" autocomplete="username" required></label>
+      <label>Jelszó<input id="password" name="password" type="password" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Bejelentkezés</button>
+      <p class="alt">Még nincs fiókod? <a href="/register">Regisztráció</a></p>
+    </form>
+  </main>
+</div>
+<script src="/js/app.js"></script>
 </body>
-<script>
-    const form = document.getElementById("loginForm");
-    const usernameInput = document.getElementById("username");
-    const passwordInput = document.getElementById("password");
-    const errorMsg = document.getElementById("errorMsg");
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-    const response = await fetch("/api/login", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-        username: usernameInput.value,
-        password: passwordInput.value
-    })
-});
-
-const data = await response.json();
-
-if (!response.ok) {
-    if (data.code === "INVALID_CREDENTIALS") {
-        usernameInput.classList.add("input-error");
-        passwordInput.classList.add("input-error");
-
-        errorMsg.textContent = data.message;
-        errorMsg.style.display = "block";
-    }
-
-    return;
-}
-console.log(data.token)
-localStorage.setItem("token", data.token)
-window.location.href = "/dashboard"
-
-    })
-</script>
 </html>
