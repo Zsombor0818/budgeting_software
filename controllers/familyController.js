@@ -6,7 +6,7 @@ const createFamily = async (req, res) => {
 
     const familyId = Math.floor(Math.random() * 90000) + 10000;
     const family = await db.query("INSERT INTO families (familyId, userId, familyName) VALUES (?,?,?)", [familyId, userId, familyName])
-     return res.status(200).json({message: "ok"})
+     return res.status(200).json({message: "ok", familyId: familyId})
 }
 
 const deleteFamily = async (req, res) => {
