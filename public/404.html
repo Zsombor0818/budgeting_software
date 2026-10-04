@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Az oldal nem található – Közös Kassza</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .code{
+      font:700 clamp(5rem,16vw,9rem)/1 var(--display);
+      letter-spacing:-.04em;
+      color:var(--accent);
+    }
+    .nf-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem}
+    .nf-text{color:var(--muted);max-width:38ch}
+    @media (max-width:860px){
+      .auth-side{padding:1.25rem 1.5rem}
+      .auth-side .code{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="auth">
+
+    <aside class="auth-side">
+      <div class="brand">
+        <i>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h14a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"/>
+            <path d="M4 7l11-3v3"/>
+          </svg>
+        </i>
+        Közös Kassza
+      </div>
+
+      <div class="code" aria-hidden="true">404</div>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-form">
+        <h1>Az oldal nem található</h1>
+
+        <p class="nf-text">
+          A keresett oldal nem létezik, vagy már átkerült máshová.
+          Ellenőrizd a címet, vagy térj vissza a főoldalra.
+        </p>
+
+        <div class="nf-actions">
+          <a class="btn primary" href="/dashboard">Vissza a főoldalra</a>
+          <button class="btn ghost" type="button" onclick="history.back()">Előző oldal</button>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</body>
+</html>
