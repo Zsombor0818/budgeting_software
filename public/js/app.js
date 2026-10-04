@@ -261,9 +261,9 @@ async function loadCore() {
 function renderSidebar() {
     const links = [
         ["/dashboard", "home", "Főoldal"],
-        ["/transactions.html", "swap", "Bevétel / Kiadás"],
-        ["/calendar.html", "cal", "Naptár"],
-        ["/family.html", "users", "Család"]
+        ["/transactions", "swap", "Bevétel / Kiadás"],
+        ["/calendar", "cal", "Naptár"],
+        ["/family", "users", "Család"]
     ];
 
     let linkHtml = "";

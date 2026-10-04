@@ -16,5 +16,16 @@ router.get("/dashboard", (req, res) => {
     res.sendFile(path.join(__dirname, "../public", "dashboard.html"));
 });
 
+router.get("/transactions", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public", "transactions.html"));
+});
+
+router.get("/calendar", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public", "calendar.html"));
+});
+
+router.get("/family", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public", "family.html"));
+});
 
 module.exports = router; 
