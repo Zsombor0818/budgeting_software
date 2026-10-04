@@ -302,7 +302,7 @@ async function loadCore() {
         );
     }
 
-    const calendar = await api("/calendar");
+    const calendar = await api("/api/calendar");
 
     if (calendar.ok) {
         if (Array.isArray(calendar.data)) {
@@ -724,7 +724,7 @@ async function saveEvent(e) {
     }
 
     const result = await api(
-        "/calendar",
+        "/api/calendar",
         editingEventId ? "PUT" : "POST",
         body
     );
@@ -934,7 +934,7 @@ const actions = {
         }
 
         const result = await api(
-            "/calendar",
+            "/api/calendar",
             "DELETE",
             {
                 eventId: Number(button.dataset.id)

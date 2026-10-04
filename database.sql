@@ -30,3 +30,11 @@ CREATE TABLE transactions (
     amount INT NOT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
+
+CREATE TABLE calendar (
+    eventId INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    familyId INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    `description` VARCHAR(255) NOT NULL,
+    date TIMESTAMP
+)

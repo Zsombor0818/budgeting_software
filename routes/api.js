@@ -4,6 +4,7 @@ const auth = require("../middleware/auth")
 const userController = require("../controllers/userController")
 const familyController = require("../controllers/familyController")
 const budgetController = require("../controllers/budgetController")
+const calendarController = require("../controllers/calendarController")
 
 router.post("/register", userController.register)
 router.post("/login", userController.login)
@@ -21,5 +22,10 @@ router.get("/transactions", auth, budgetController.getTransactions)
 router.post("/transaction", auth, budgetController.addTransaction) 
 router.put("/transaction", auth, budgetController.updateTransaction) 
 router.delete("/transaction", auth, budgetController.deleteTransaction) 
+
+router.get("/calendar", auth, calendarController.getEvent)
+router.post("/calendar", auth, calendarController.addEvent) 
+router.put("/calendar", auth, calendarController.updateEvent) 
+router.delete("/calendar", auth, calendarController.deleteEvent) 
 
 module.exports = router;     

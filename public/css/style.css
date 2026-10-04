@@ -87,11 +87,12 @@ input:focus,select:focus{border-color:var(--accent)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.35rem}
 
 /* listák */
-.list{list-style:none;margin:0;padding:0}
+.list{list-style:none;margin:0;padding:0;}
 .tx{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:.9rem;align-items:center;padding:.8rem 0;border-top:1px solid var(--line)}
 .list>.tx:first-child{border-top:0}
 .dot{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700}
 .dot.income{background:var(--income-soft)}.dot.expense{background:var(--expense-soft)}
+.tx-main small span{min-width:0;overflow-wrap:anywhere}
 .tx-main{min-width:0}
 .tx-main strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tx-main small{color:var(--muted);display:flex;gap:.9rem;flex-wrap:wrap}
