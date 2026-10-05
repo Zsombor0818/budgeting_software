@@ -1,30 +1,51 @@
+/* ==========================================================================
+   1. GLOBÁLIS ÁLLAPOT ÉS ALAPBEÁLLÍTÁSOK
+   ========================================================================== */
+
+// Az oldalak render-függvényeit ide gyűjtjük (pages.login, pages.dashboard stb.)
 const pages = {};
 
+// A bejelentkezéskor eltárolt JWT token (ha van)
 const token = localStorage.getItem("token");
+
+// Az aktuális oldal neve: a <body data-page="..."> attribútumból jön
 const page = document.body.dataset.page;
+
+// Védett oldal-e (a <body data-auth> attribútum jelzi): ilyenkor kell bejelentkezés
 const PROTECTED = document.body.hasAttribute("data-auth");
 
+// Magyar hónapnevek (a tömb 0-tól indexelődik, mint a JS Date hónapjai)
 const MONTHS = [
     "január", "február", "március", "április", "május", "június",
     "július", "augusztus", "szeptember", "október", "november", "december"
 ];
 
+
+/* ==========================================================================
+   2. SEGÉDFÜGGVÉNYEK
+   ========================================================================== */
+
+// Rövidítés a document.querySelector-hoz (opcionálisan egy adott elemen belül keres)
 function $(selector, root = document) {
     return root.querySelector(selector);
 }
 
+// Szám kiegészítése vezető nullával 2 karakterre: 5 -> "05"
 function pad(n) {
     return String(n).padStart(2, "0");
 }
 
+// Date objektum -> "ÉÉÉÉ-HH-NN" szöveg
 function ymd(d) {
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 }
 
+// Év + hónapindex (0-11) -> "ÉÉÉÉ-HH" szöveg
 function ym(y, m) {
     return y + "-" + pad(m + 1);
 }
 
+// HTML-escape: megakadályozza az XSS-t, ha felhasználói szöveget írunk innerHTML-be
 function esc(s) {
     if (s === null || s === undefined) {
         s = "";
@@ -38,13 +59,16 @@ function esc(s) {
         .replaceAll("'", "&#39;");
 }
 
+// Forint formázás magyar ezres tagolással: 12345 -> "12 345 Ft"
 function huf(n) {
     return new Intl.NumberFormat("hu-HU").format(Math.round(n)) + " Ft";
 }
 
+// Bármilyen dátumértékből "ÉÉÉÉ-HH-NN" nap-szöveget csinál
 function dayOf(value) {
     const d = new Date(value);
 
+    // Ha nem értelmezhető dátum, az első 10 karaktert használjuk
     if (isNaN(d)) {
         return String(value).slice(0, 10);
     }
@@ -52,6 +76,7 @@ function dayOf(value) {
     return ymd(d);
 }
 
+// Összeadja a lista azon tételeinek összegét, amelyek típusa megegyezik (income / expense)
 function sum(list, type) {
     let total = 0;
 
@@ -64,6 +89,11 @@ function sum(list, type) {
     return total;
 }
 
+
+/* ==========================================================================
+   3. IKONOK ÉS MÁRKA
+   Az SVG ikonok csak az útvonal (path) részeket tartalmazzák.
+   ========================================================================== */
 const ICONS = {
     home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
     swap: '<path d="M7 4l-4 4 4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/>',
@@ -73,24 +103,37 @@ const ICONS = {
     wallet: '<path d="M4 7h14a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"/><path d="M4 7l11-3v3"/>'
 };
 
+// Egy teljes <svg> elemet ad vissza a megadott nevű ikonnal
+// (aria-hidden: a képernyőolvasó kihagyja, mert dekoratív)
 function icon(name) {
     return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + "</svg>";
 }
 
+// Az alkalmazás logója (ikon + név)
 const BRAND = '<div class="brand"><i>' + icon("wallet") + "</i>Közös Kassza</div>";
 
+
+/* ==========================================================================
+   4. KIJELENTKEZÉS ÉS API HÍVÁSOK
+   ========================================================================== */
+
+// Token törlése, majd átirányítás a belépő oldalra
 function logOut() {
     localStorage.removeItem("token");
     location.href = "/login";
 }
 
+// Egységes API hívó. Mindig {ok, status, data} alakú objektummal tér vissza,
+// és sosem dob kivételt, így a hívó oldalon nem kell try/catch.
 async function api(url, method = "GET", body) {
     const headers = {};
 
+    // JSON törzs esetén jelezzük a tartalom típusát
     if (body) {
         headers["Content-Type"] = "application/json";
     }
 
+    // Ha be vagyunk jelentkezve, csatoljuk a tokent
     if (token) {
         headers.Authorization = "Bearer " + token;
     }
@@ -104,6 +147,7 @@ async function api(url, method = "GET", body) {
             body: body ? JSON.stringify(body) : undefined
         });
     } catch (err) {
+        // Hálózati hiba: a szerver el sem érhető
         return {
             ok: false,
             status: 0,
@@ -111,19 +155,22 @@ async function api(url, method = "GET", body) {
         };
     }
 
+    // Először szövegként olvassuk be, mert a szerver néha nem JSON-t küld
     const raw = await res.text();
     let data;
 
     try {
         data = JSON.parse(raw);
     } catch (err) {
-        data = { text: raw };
+        data = { text: raw };   // nem JSON válasz: a nyers szöveget "text" mezőben adjuk át
     }
 
+    // 401 = lejárt/érvénytelen token: védett oldalon kijelentkeztetünk
     if (res.status === 401 && PROTECTED) {
         logOut();
     }
 
+    // Ha hiba van és nincs üzenet a válaszban, generálunk egyet
     if (!res.ok && !data.message) {
         data.message = "Szerverhiba (" + res.status + ").";
     }
@@ -135,19 +182,26 @@ async function api(url, method = "GET", body) {
     };
 }
 
+
+/* ==========================================================================
+   5. FELUGRÓ ÜZENETEK ÉS PÁRBESZÉDABLAKOK
+   ========================================================================== */
+
+// Értesítés (toast) megjelenítése 3,5 másodpercre. bad = true esetén piros (hiba)
 function toast(message, bad = false) {
     let box = $(".toasts");
 
+    // A tároló elemet csak az első alkalommal hozzuk létre
     if (!box) {
         box = document.createElement("div");
         box.className = "toasts";
-        box.setAttribute("role", "status");
+        box.setAttribute("role", "status");   // képernyőolvasó felolvassa az új üzenetet
         document.body.append(box);
     }
 
     const t = document.createElement("div");
     t.className = "toast" + (bad ? " bad" : "");
-    t.textContent = message;
+    t.textContent = message;   // textContent: biztonságos, nem értelmez HTML-t
     box.append(t);
 
     setTimeout(function () {
@@ -155,10 +209,12 @@ function toast(message, bad = false) {
     }, 3500);
 }
 
+// Megerősítő ablak. Promise-t ad vissza: true, ha a felhasználó az OK gombot nyomta
 function confirmBox(title, okLabel = "Törlés") {
     return new Promise(function (resolve) {
         const d = document.createElement("dialog");
 
+        // method="dialog": a gomb value-ja lesz a dialog.returnValue, és a form bezárja az ablakot
         d.innerHTML = `
             <form method="dialog">
                 <h2>${esc(title)}</h2>
@@ -169,6 +225,7 @@ function confirmBox(title, okLabel = "Törlés") {
             </form>
         `;
 
+        // Bezáráskor kiértékeljük a választ, és eltávolítjuk az elemet a DOM-ból
         d.addEventListener("close", function () {
             resolve(d.returnValue === "yes");
             d.remove();
@@ -179,10 +236,12 @@ function confirmBox(title, okLabel = "Törlés") {
     });
 }
 
+// Szövegbekérő ablak. A beírt szöveget adja vissza, vagy null-t, ha a felhasználó mégsem
 function promptBox(title, label, value = "") {
     return new Promise(function (resolve) {
         const d = document.createElement("dialog");
 
+        // A "Mégse" gombon a formnovalidate miatt nem kell kitölteni a kötelező mezőt
         d.innerHTML = `
             <form method="dialog">
                 <h2>${esc(title)}</h2>
@@ -212,19 +271,27 @@ function promptBox(title, label, value = "") {
     });
 }
 
-let me = null;
-let fam = { family: null, members: [] };
-let txs = [];
-let events = [];
 
+/* ==========================================================================
+   6. ADATBETÖLTÉS
+   Az alkalmazás fő adatai modulszintű változókban élnek.
+   ========================================================================== */
+let me = null;                          // a bejelentkezett felhasználó
+let fam = { family: null, members: [] }; // a család és a tagjai
+let txs = [];                           // tranzakciók (bevételek / kiadások)
+let events = [];                        // naptári események
+
+// Betölti a felhasználót, a családját, a tranzakciókat és az eseményeket
 async function loadCore() {
     const user = await api("/api/user");
     me = user.data.user;
 
+    // Alaphelyzetbe állítjuk az adatokat minden betöltés előtt
     fam = { family: null, members: [] };
     txs = [];
     events = [];
 
+    // Ha nincs felhasználó vagy nincs családja, nincs több betöltendő adat
     if (!me || !me.familyId) {
         return;
     }
@@ -242,6 +309,7 @@ async function loadCore() {
     const transactions = await api("/api/transactions");
 
     if (transactions.ok && Array.isArray(transactions.data)) {
+        // Rendezés: legújabb elöl; azonos dátumnál a nagyobb azonosító (később felvett) előbb
         txs = transactions.data.sort(function (a, b) {
             return new Date(b.date) - new Date(a.date) || b.transId - a.transId;
         });
@@ -250,6 +318,7 @@ async function loadCore() {
     const calendar = await api("/api/calendar");
 
     if (calendar.ok) {
+        // A szerver válasza lehet sima tömb, vagy {events: [...]} objektum is
         if (Array.isArray(calendar.data)) {
             events = calendar.data;
         } else if (calendar.data && Array.isArray(calendar.data.events)) {
@@ -258,7 +327,14 @@ async function loadCore() {
     }
 }
 
+
+/* ==========================================================================
+   7. OLDALSÁV ÉS "NINCS CSALÁD" ÜZENET
+   ========================================================================== */
+
+// Felépíti az oldalsó menüt; az aktuális oldal linkje aria-current jelölést kap
 function renderSidebar() {
+    // [útvonal, ikon neve, felirat]
     const links = [
         ["/dashboard", "home", "Főoldal"],
         ["/transactions", "swap", "Bevétel / Kiadás"],
@@ -295,6 +371,7 @@ function renderSidebar() {
     `;
 }
 
+// Üres állapot kártya azoknak, akik még nem tartoznak családhoz
 function noFamily() {
     return `
         <div class="card empty">
@@ -308,10 +385,15 @@ function noFamily() {
     `;
 }
 
-let txDialog = null;
-let editingId = null;
-let onTxSaved = function () {};
 
+/* ==========================================================================
+   8. TRANZAKCIÓ DIALÓGUS (új / módosítás) ÉS SOR RENDERELÉS
+   ========================================================================== */
+let txDialog = null;                    // a dialógus elem
+let editingId = null;                   // a szerkesztett tétel azonosítója (null = új tétel)
+let onTxSaved = function () {};         // mentés után lefutó callback (az oldal újrarajzolása)
+
+// Egyszer létrehozza a tranzakció dialógust és a DOM-ba teszi
 function initTxDialog() {
     txDialog = document.createElement("dialog");
 
@@ -360,13 +442,16 @@ function initTxDialog() {
     $("#txForm").addEventListener("submit", saveTransaction);
 }
 
+// Mentés: új tétel esetén POST, szerkesztésnél PUT kérés
 async function saveTransaction(e) {
-    e.preventDefault();
+    e.preventDefault();   // ne töltse újra az oldalt a form
 
+    // Az űrlap mezőit sima objektummá alakítjuk
     const body = Object.fromEntries(new FormData(e.target).entries());
     body.amount = Number(body.amount);
     body.description = body.description || "";
 
+    // Szerkesztésnél a szerver tudja, melyik tételt kell módosítani
     if (editingId) {
         body.transId = editingId;
     }
@@ -390,10 +475,12 @@ async function saveTransaction(e) {
         toast("Tétel hozzáadva");
     }
 
+    // Friss adatok betöltése, majd az aktuális oldal újrarajzolása
     await loadCore();
     onTxSaved();
 }
 
+// Megnyitja a dialógust: tx megadva = módosítás, nélküle = új tétel
 function openTx(tx) {
     const form = $("#txForm");
 
@@ -415,6 +502,7 @@ function openTx(tx) {
         $("#txNote").textContent = "A tétel a mentés napjával kerül rögzítésre.";
     }
 
+    // Módosításkor a típus (bevétel/kiadás) nem változtatható: letiltjuk a rádiógombokat
     const radios = form.querySelectorAll('[name="type"]');
 
     for (const radio of radios) {
@@ -426,10 +514,12 @@ function openTx(tx) {
     form.title.focus();
 }
 
+// Egy tranzakciósor HTML-je a listához
 function txRow(t) {
     const sign = t.type === "income" ? "+" : "−";
-    const date = dayOf(t.date).replaceAll("-", ". ") + ".";
+    const date = dayOf(t.date).replaceAll("-", ". ") + ".";   // "2026-10-05" -> "2026. 10. 05."
 
+    // A felhasználónév és a megjegyzés csak akkor jelenik meg, ha van
     let user = "";
     if (t.username) {
         user = "<span>" + esc(t.username) + "</span>";
@@ -463,9 +553,14 @@ function txRow(t) {
     `;
 }
 
+
+/* ==========================================================================
+   9. ESEMÉNY DIALÓGUS (naptár) ÉS SOR RENDERELÉS
+   Ugyanaz a felépítés, mint a tranzakcióknál.
+   ========================================================================== */
 let eventDialog = null;
-let editingEventId = null;
-let onEventSaved = function () {};
+let editingEventId = null;              // null = új esemény
+let onEventSaved = function () {};      // mentés után lefutó callback
 
 function initEventDialog() {
     eventDialog = document.createElement("dialog");
@@ -502,6 +597,7 @@ function initEventDialog() {
     $("#eventForm").addEventListener("submit", saveEvent);
 }
 
+// Esemény mentése: POST (új) vagy PUT (módosítás)
 async function saveEvent(e) {
     e.preventDefault();
 
@@ -540,6 +636,7 @@ async function saveEvent(e) {
     onEventSaved();
 }
 
+// Megnyitja az esemény dialógust; új eseménynél a megadott (vagy a mai) dátumot tölti be
 function openEvent(event = null, date = "") {
     const form = $("#eventForm");
 
@@ -562,6 +659,7 @@ function openEvent(event = null, date = "") {
     form.title.focus();
 }
 
+// Egy eseménysor HTML-je (a tranzakciósor stílusát használja)
 function eventRow(event) {
     const date = dayOf(event.date).replaceAll("-", ". ") + ".";
 
@@ -596,29 +694,37 @@ function eventRow(event) {
     `;
 }
 
-let calState = null;
+
+/* ==========================================================================
+   10. NAPTÁR RAJZOLÁSA
+   ========================================================================== */
+let calState = null;   // {year, month, selected}: a megjelenített hónap és a kiválasztott nap
 
 function drawCalendar() {
     const view = $("#view");
     const today = ymd(new Date());
 
-    const first = new Date(calState.year, calState.month, 1);
-    const days = new Date(calState.year, calState.month + 1, 0).getDate();
-    const leading = (first.getDay() + 6) % 7;
+    const first = new Date(calState.year, calState.month, 1);               // a hónap első napja
+    const days = new Date(calState.year, calState.month + 1, 0).getDate();  // a hónap napjainak száma
+    const leading = (first.getDay() + 6) % 7;   // hány üres cella kell az elején (a hét hétfőn kezdődik)
 
     let cells = "";
 
+    // Üres cellák a hónap első napja előtt
     for (let i = 0; i < leading; i++) {
         cells += '<div class="day off" aria-hidden="true"></div>';
     }
 
+    // A hónap napjai
     for (let day = 1; day <= days; day++) {
         const date = ym(calState.year, calState.month) + "-" + pad(day);
 
+        // Az adott naphoz tartozó események
         const dayEvents = events.filter(function (event) {
             return dayOf(event.date) === date;
         });
 
+        // CSS osztályok: mai nap és kiválasztott nap kiemelése
         let classes = "day";
         if (date === today) {
             classes += " today";
@@ -627,6 +733,7 @@ function drawCalendar() {
             classes += " sel";
         }
 
+        // Ha vannak események, kiírjuk a darabszámot
         let count = "";
         if (dayEvents.length) {
             count = '<span class="i">' + dayEvents.length + " esemény</span>";
@@ -640,10 +747,12 @@ function drawCalendar() {
         `;
     }
 
+    // A kiválasztott nap eseményei (jobb oldali panel)
     const selectedEvents = events.filter(function (event) {
         return dayOf(event.date) === calState.selected;
     });
 
+    // A hét napjainak fejléce
     let dows = "";
     for (const d of ["H", "K", "Sze", "Cs", "P", "Szo", "V"]) {
         dows += '<div class="dow">' + d + "</div>";
@@ -682,9 +791,16 @@ function drawCalendar() {
     `;
 }
 
+
+/* ==========================================================================
+   11. GOMBKEZELŐK (eseménydelegálás)
+   Minden gomb data-act attribútummal jelzi, mit csináljon. Ezt az "actions"
+   objektum kulcsai kezelik, egyetlen közös click-figyelővel (lásd lent).
+   ========================================================================== */
 const actions = {
     logout: logOut,
 
+    // Dialógusok bezárása
     txCancel: function () {
         txDialog.close();
     },
@@ -693,11 +809,13 @@ const actions = {
         eventDialog.close();
     },
 
+    // --- Tranzakciók ---
     newTx: function () {
         openTx();
     },
 
     editTx: function (button) {
+        // A gomb data-id-ja szöveg, ezért szöveggé alakítjuk az azonosítót az összehasonlításhoz
         const tx = txs.find(function (t) {
             return String(t.transId) === button.dataset.id;
         });
@@ -728,6 +846,7 @@ const actions = {
         onTxSaved();
     },
 
+    // --- Események ---
     newEvent: function (button) {
         openEvent(null, button.dataset.date);
     },
@@ -763,6 +882,7 @@ const actions = {
         onEventSaved();
     },
 
+    // --- Naptár navigáció ---
     pickDay: function (button) {
         calState.selected = button.dataset.date;
         drawCalendar();
@@ -771,6 +891,7 @@ const actions = {
     calPrev: function () {
         calState.month--;
 
+        // Január előtt az előző év decembere jön
         if (calState.month < 0) {
             calState.month = 11;
             calState.year--;
@@ -782,6 +903,7 @@ const actions = {
     calNext: function () {
         calState.month++;
 
+        // December után a következő év januárja jön
         if (calState.month > 11) {
             calState.month = 0;
             calState.year++;
@@ -790,6 +912,9 @@ const actions = {
         drawCalendar();
     },
 
+    // --- Család ---
+
+    // A családazonosító vágólapra másolása
     copyId: async function (button) {
         try {
             await navigator.clipboard.writeText(button.dataset.id);
@@ -799,9 +924,11 @@ const actions = {
         }
     },
 
+    // Család átnevezése (csak a tulajdonos)
     editFamily: async function () {
         const name = await promptBox("Család módosítása", "Család neve", fam.family.familyName);
 
+        // null vagy üres = a felhasználó mégsem módosít
         if (!name) {
             return;
         }
@@ -821,6 +948,7 @@ const actions = {
         pages.family();
     },
 
+    // Család törlése (csak a tulajdonos)
     delFamily: async function () {
         const sure = await confirmBox("Biztosan törlöd a családot?", "Család törlése");
 
@@ -842,6 +970,7 @@ const actions = {
         pages.family();
     },
 
+    // Kilépés a családból (nem tulajdonosoknak, vagy ha a család már megszűnt)
     leaveFamily: async function () {
         const sure = await confirmBox("Biztosan kilépsz a családból?", "Kilépés");
 
@@ -864,6 +993,9 @@ const actions = {
     }
 };
 
+// Eseménydelegálás: egyetlen figyelő az egész dokumentumon.
+// Megkeresi a legközelebbi data-act attribútumos elemet, és lefuttatja a hozzá tartozó kezelőt.
+// Előnye: a később, dinamikusan létrehozott gombok is működnek.
 document.addEventListener("click", function (e) {
     const button = e.target.closest("[data-act]");
 
@@ -878,7 +1010,16 @@ document.addEventListener("click", function (e) {
     }
 });
 
+
+/* ==========================================================================
+   12. BEJELENTKEZÉS / REGISZTRÁCIÓ
+   ========================================================================== */
+
+// Közös logika a két űrlaphoz.
+// url: melyik végpontot hívja, getBody: az elküldendő adatokat adó függvény,
+// onOk: sikeres válasz után lefutó függvény
 function authForm(url, getBody, onOk) {
+    // Aki már be van jelentkezve, az nem látja a belépő oldalt
     if (token) {
         location.href = "/dashboard";
         return;
@@ -890,10 +1031,12 @@ function authForm(url, getBody, onOk) {
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
 
+        // Dupla elküldés ellen letiltjuk a gombot a kérés idejére
         const button = $("button", form);
         button.disabled = true;
         error.textContent = "";
 
+        // Az előző hibajelzések törlése a mezőkről
         for (const input of form.querySelectorAll("input")) {
             input.classList.remove("input-error");
         }
@@ -901,14 +1044,18 @@ function authForm(url, getBody, onOk) {
         const result = await api(url, "POST", getBody());
         button.disabled = false;
 
+        // A szerver néha sima szöveget küld JSON helyett (data.text).
+        // Ezt itt egységes {code, message} alakra hozzuk.
         if (result.ok && result.data.text !== undefined) {
             const text = result.data.text.trim();
 
+            // "siker" = sikeres művelet
             if (text === "siker") {
                 onOk(result.data);
                 return;
             }
 
+            // Ismert hibaszövegek -> [hibakód, felhasználóbarát üzenet]
             const messages = {
                 "foglalt username": ["USERNAME_TAKEN", "Ez a felhasználónév már foglalt."],
                 "foglalt email": ["EMAIL_TAKEN", "Ez az email cím már foglalt."],
@@ -922,13 +1069,16 @@ function authForm(url, getBody, onOk) {
             if (found) {
                 result.data = { code: found[0], message: found[1] };
             } else {
+                // Ismeretlen szöveg: úgy jelenítjük meg, ahogy érkezett
                 result.data = { code: undefined, message: text };
             }
         }
 
+        // Hibakezelés: üzenet kiírása és a hibás mezők megjelölése
         if (!result.ok) {
             error.textContent = result.data.message || "Valami hiba történt.";
 
+            // Melyik hibakódnál mely mezők legyenek pirosak (a mezők id-jai)
             const fieldMap = {
                 INVALID_CREDENTIALS: ["username", "password"],
                 USERNAME_TAKEN: ["username"],
@@ -953,6 +1103,7 @@ function authForm(url, getBody, onOk) {
     });
 }
 
+// Belépő oldal: siker esetén eltárolja a tokent és a főoldalra visz
 pages.login = function () {
     authForm(
         "/api/login",
@@ -969,6 +1120,7 @@ pages.login = function () {
     );
 };
 
+// Regisztrációs oldal: siker esetén a belépő oldalra irányít
 pages.register = function () {
     authForm(
         "/api/register",
@@ -986,13 +1138,19 @@ pages.register = function () {
     );
 };
 
-let chartOffset = 0;
+
+/* ==========================================================================
+   13. FŐOLDAL (DASHBOARD)
+   ========================================================================== */
+let chartOffset = 0;   // hány hónappal toljuk vissza a diagram időablakát (csúszka értéke)
 
 pages.dashboard = function () {
     const view = $("#view");
 
+    // Az oldalfejléc alcíme a család neve
     $("#sub").textContent = fam.family ? fam.family.familyName : "";
 
+    // Család nélkül csak az "állítsd be" üzenetet mutatjuk
     if (!fam.family) {
         view.innerHTML = noFamily();
         return;
@@ -1000,22 +1158,28 @@ pages.dashboard = function () {
 
     $("#actions").innerHTML = '<button class="btn primary" data-act="newTx">Új tétel</button>';
 
+    // --- Az aktuális hónap összesítése ---
     const now = new Date();
-    const key = ym(now.getFullYear(), now.getMonth());
+    const key = ym(now.getFullYear(), now.getMonth());   // pl. "2026-10"
 
+    // Az e havi tételek (a dátum "ÉÉÉÉ-HH"-val kezdődik)
     const month = txs.filter(function (t) {
         return dayOf(t.date).startsWith(key);
     });
 
     const income = sum(month, "income");
     const expense = sum(month, "expense");
+
+    // A közös egyenleg az összes tétel alapján számolódik (nem csak e havi)
     const balance = sum(txs, "income") - sum(txs, "expense");
 
+    // A bevétel aránya az e havi forgalomból (a hero kártyán lévő sáv szélessége)
     let percent = 0;
     if (income + expense) {
         percent = Math.round(income / (income + expense) * 100);
     }
 
+    // --- Oszlopdiagram adatai: 6 hónap, a csúszka értékével eltolva ---
     const series = [];
 
     for (let i = 5; i >= 0; i--) {
@@ -1027,25 +1191,28 @@ pages.dashboard = function () {
         });
 
         series.push({
-            label: MONTHS[d.getMonth()].slice(0, 3),
+            label: MONTHS[d.getMonth()].slice(0, 3),   // a hónapnév első 3 betűje
             income: sum(list, "income"),
             expense: sum(list, "expense")
         });
     }
 
+    // A legnagyobb érték határozza meg az oszlopok skáláját (min. 1, hogy ne osszunk nullával)
     let max = 1;
     for (const s of series) {
         max = Math.max(max, s.income, s.expense);
     }
 
+    // Az SVG oszlopok felépítése: hónaponként egy bevételi és egy kiadási oszlop
     let bars = "";
 
     for (let i = 0; i < series.length; i++) {
         const s = series[i];
-        const x = 20 + i * 90;
-        const hi = s.income / max * 150;
-        const he = s.expense / max * 150;
+        const x = 20 + i * 90;              // a hónapcsoport vízszintes pozíciója
+        const hi = s.income / max * 150;    // bevételi oszlop magassága (max. 150px)
+        const he = s.expense / max * 150;   // kiadási oszlop magassága
 
+        // y = 170 - magasság: az SVG-ben az y lefelé nő, ezért alulról "növesztjük" az oszlopot
         bars += `
             <rect class="bi" x="${x}" y="${170 - hi}" width="28" height="${hi}" rx="4">
                 <title>Bevétel: ${huf(s.income)}</title>
@@ -1057,6 +1224,7 @@ pages.dashboard = function () {
         `;
     }
 
+    // --- Legnagyobb kiadások: az e havi kiadások megnevezés szerint csoportosítva ---
     const groups = {};
 
     for (const t of month) {
@@ -1064,6 +1232,7 @@ pages.dashboard = function () {
             continue;
         }
 
+        // Kis-nagybetűtől és szóközöktől független csoportkulcs
         const groupKey = t.title.trim().toLowerCase();
 
         if (!groups[groupKey]) {
@@ -1073,6 +1242,7 @@ pages.dashboard = function () {
         groups[groupKey].sum += Number(t.amount);
     }
 
+    // Csökkenő sorrend, legfeljebb az első 5
     const top = Object.values(groups)
         .sort(function (a, b) {
             return b.sum - a.sum;
@@ -1085,6 +1255,7 @@ pages.dashboard = function () {
         let rows = "";
 
         for (const t of top) {
+            // A sáv szélessége a legnagyobb tételhez viszonyított arány (min. 4%, hogy látszódjon)
             const width = Math.max(4, t.sum / top[0].sum * 100);
 
             rows += `
@@ -1103,6 +1274,7 @@ pages.dashboard = function () {
         topHtml = '<p class="muted">Ebben a hónapban még nincs kiadás.</p>';
     }
 
+    // --- Legutóbbi 5 tétel (a txs már dátum szerint rendezett) ---
     let recentHtml = "";
 
     if (txs.length) {
@@ -1111,6 +1283,7 @@ pages.dashboard = function () {
         recentHtml = '<p class="muted">Még nincs rögzített tétel.</p>';
     }
 
+    // --- A teljes oldal összeállítása ---
     view.innerHTML = `
         <div class="grid">
 
@@ -1178,6 +1351,7 @@ pages.dashboard = function () {
         </div>
     `;
 
+    // A csúszka mozgatásakor eltoljuk a diagram időablakát és újrarajzoljuk az oldalt
     const slider = $("#chartSlider");
 
     slider.addEventListener("input", function () {
@@ -1186,7 +1360,11 @@ pages.dashboard = function () {
     });
 };
 
-let txFilter = { type: "all", month: "all" };
+
+/* ==========================================================================
+   14. TRANZAKCIÓK OLDAL (szűrés típus és hónap szerint)
+   ========================================================================== */
+let txFilter = { type: "all", month: "all" };   // az aktuális szűrők (megmaradnak újrarajzoláskor)
 
 pages.transactions = function () {
     const view = $("#view");
@@ -1199,6 +1377,7 @@ pages.transactions = function () {
 
     $("#actions").innerHTML = '<button class="btn primary" data-act="newTx">Új tétel</button>';
 
+    // A hónaplista a ténylegesen létező tételekből készül ("ÉÉÉÉ-HH" formában, ismétlődés nélkül)
     const months = [];
 
     for (const t of txs) {
@@ -1209,10 +1388,12 @@ pages.transactions = function () {
         }
     }
 
+    // Ha a kiválasztott hónapban már nincs tétel (pl. törlés után), visszaállunk "Minden hónap"-ra
     if (txFilter.month !== "all" && !months.includes(txFilter.month)) {
         txFilter.month = "all";
     }
 
+    // Típusszűrő gombok: [érték, felirat]
     const types = [
         ["all", "Mind"],
         ["income", "Bevétel"],
@@ -1232,11 +1413,12 @@ pages.transactions = function () {
         `;
     }
 
+    // Hónap legördülő lista opciói
     let monthHtml = "";
 
     for (const month of months) {
         const selected = txFilter.month === month ? "selected" : "";
-        const name = MONTHS[Number(month.slice(5)) - 1];
+        const name = MONTHS[Number(month.slice(5)) - 1];   // "2026-10" -> 10 -> "október"
 
         monthHtml += `
             <option value="${month}" ${selected}>
@@ -1266,6 +1448,8 @@ pages.transactions = function () {
         </section>
     `;
 
+    // Csak az összesítőt és a listát rajzolja újra a szűrők alapján
+    // (a szűrősáv érintetlen marad, így nem veszik el a fókusz)
     function draw() {
         const list = txs.filter(function (t) {
             const typeOk = txFilter.type === "all" || t.type === txFilter.type;
@@ -1304,6 +1488,7 @@ pages.transactions = function () {
         }
     }
 
+    // Szűrőváltozás: elmentjük az új értéket, és újrarajzoljuk a listát
     for (const radio of view.querySelectorAll('input[name="ftype"]')) {
         radio.addEventListener("change", function () {
             txFilter.type = radio.value;
@@ -1319,12 +1504,18 @@ pages.transactions = function () {
     draw();
 };
 
+
+/* ==========================================================================
+   15. NAPTÁR OLDAL
+   ========================================================================== */
 pages.calendar = function () {
     if (!fam.family) {
         $("#view").innerHTML = noFamily();
         return;
     }
 
+    // Az állapotot csak egyszer inicializáljuk: a mai hónap és a mai nap van kiválasztva.
+    // Később megmarad, így mentés után sem ugrik vissza a nézet.
     if (!calState) {
         calState = {
             year: new Date().getFullYear(),
@@ -1333,14 +1524,24 @@ pages.calendar = function () {
         };
     }
 
+    // Esemény mentése után csak a naptárat rajzoljuk újra
     onEventSaved = drawCalendar;
     drawCalendar();
 };
 
+
+/* ==========================================================================
+   16. CSALÁD OLDAL
+   Három állapota van:
+   1) a család már nem létezik (a tulajdonos törölte),
+   2) nincs családja a felhasználónak (létrehozás / csatlakozás űrlap),
+   3) van családja (adatok és tagok).
+   ========================================================================== */
 pages.family = function () {
     const view = $("#view");
     const family = fam.family;
 
+    // 1) A felhasználóhoz még tartozik családazonosító, de a család már törlődött
     if (!family && me.familyId) {
         view.innerHTML = `
             <div class="card empty">
@@ -1356,6 +1557,7 @@ pages.family = function () {
         return;
     }
 
+    // 2) Nincs család: két űrlap (új létrehozása / meglévőhöz csatlakozás)
     if (!family) {
         view.innerHTML = `
             <div class="grid g2">
@@ -1393,6 +1595,7 @@ pages.family = function () {
             </div>
         `;
 
+        // Létrehozás: először a család jön létre, utána a létrehozó automatikusan belép
         $("#createForm").addEventListener("submit", async function (e) {
             e.preventDefault();
 
@@ -1405,11 +1608,13 @@ pages.family = function () {
                 return;
             }
 
+            // Azonosító nélkül nem tudnánk csatlakozni
             if (!result.data.familyId) {
                 $("#createErr").textContent = "A család létrejött, de a szerver nem adta vissza az azonosítót.";
                 return;
             }
 
+            // Tagként hozzáadjuk a létrehozót az új családhoz
             const join = await api("/api/member", "POST", {
                 familyId: Number(result.data.familyId)
             });
@@ -1424,6 +1629,7 @@ pages.family = function () {
             pages.family();
         });
 
+        // Csatlakozás meglévő családhoz azonosító alapján
         $("#joinForm").addEventListener("submit", async function (e) {
             e.preventDefault();
 
@@ -1440,6 +1646,7 @@ pages.family = function () {
 
             await loadCore();
 
+            // Ha a csatlakozás "sikerült", de nincs ilyen család, visszavonjuk a tagságot
             if (!fam.family) {
                 await api("/api/member", "DELETE", {
                     familyId: familyId
@@ -1457,8 +1664,12 @@ pages.family = function () {
         return;
     }
 
+    // 3) Van család: adatok és tagok megjelenítése
+
+    // Tulajdonos-e a bejelentkezett felhasználó (szöveggé alakítva az összehasonlításhoz)
     const owner = String(family.ownerId) === String(me.id);
 
+    // A tulajdonos módosíthat/törölhet, a tagok csak kiléphetnek
     let buttons = "";
 
     if (owner) {
@@ -1470,6 +1681,7 @@ pages.family = function () {
         buttons = '<button class="btn" data-act="leaveFamily">Kilépés a családból</button>';
     }
 
+    // Tagok listája; a tulajdonos "tulajdonos" jelvényt kap
     let membersHtml = "";
 
     for (const member of fam.members) {
@@ -1522,7 +1734,12 @@ pages.family = function () {
     `;
 };
 
+
+/* ==========================================================================
+   17. INDÍTÁS
+   ========================================================================== */
 async function init() {
+    // Nyilvános oldalak (login, regisztráció): nincs szükség adatbetöltésre
     if (!PROTECTED) {
         if (pages[page]) {
             pages[page]();
@@ -1530,6 +1747,7 @@ async function init() {
         return;
     }
 
+    // Védett oldal token nélkül: irány a belépés
     if (!token) {
         location.href = "/login";
         return;
@@ -1537,6 +1755,7 @@ async function init() {
 
     await loadCore();
 
+    // Ha a felhasználó adatai nem töltődtek be, nem tudunk tovább menni
     if (!me) {
         return;
     }
@@ -1545,6 +1764,7 @@ async function init() {
     initTxDialog();
     initEventDialog();
 
+    // Mentés / törlés után az aktuális oldalt rajzoljuk újra
     onTxSaved = function () {
         if (pages[page]) {
             pages[page]();
@@ -1557,6 +1777,7 @@ async function init() {
         }
     };
 
+    // Az aktuális oldal első kirajzolása
     if (pages[page]) {
         pages[page]();
     }
