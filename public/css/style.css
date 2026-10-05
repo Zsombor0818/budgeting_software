@@ -1,26 +1,49 @@
+/* ==========================================================================
+   1. VÁLTOZÓK (design tokenek)
+   Minden szín, sugár és betűtípus egy helyen van definiálva, így a téma
+   egyszerűen módosítható: elég itt átírni az értéket.
+   ========================================================================== */
 :root {
-    --ink: #14262d;
-    --ink-2: #22404a;
-    --paper: #f2f5f4;
-    --surface: #fff;
-    --line: #dce3e0;
-    --muted: #5d716f;
+    /* Szövegszínek és sötét felületek */
+    --ink: #14262d;          /* fő szövegszín, sötét oldalsáv háttere */
+    --ink-2: #22404a;        /* világosabb árnyalat: hover, szegélyek a sötét felületen */
+
+    /* Háttér- és felületszínek */
+    --paper: #f2f5f4;        /* az oldal háttere */
+    --surface: #fff;         /* kártyák, űrlapmezők háttere */
+    --line: #dce3e0;         /* szegélyek, elválasztó vonalak */
+    --muted: #5d716f;        /* másodlagos, halványabb szöveg */
+
+    /* Kiemelőszín (gombok, aktív menüpont, fókusz) */
     --accent: #0e7c6b;
-    --accent-soft: #dff1ed;
+    --accent-soft: #dff1ed;  /* halvány változat: jelvények, avatarok háttere */
+
+    /* Bevétel (zöld) és kiadás (piros) színek */
     --income: #1b8a57;
     --income-soft: #e1f3ea;
     --expense: #c9472f;
     --expense-soft: #fbe7e2;
-    --r: 14px;
-    --r-sm: 9px;
+
+    /* Lekerekítések */
+    --r: 14px;               /* nagy elemek: kártyák, dialógusok */
+    --r-sm: 9px;             /* kisebb elemek: gombok, input mezők */
+
+    /* Betűtípusok (tartalék fontokkal, ha a Google Font nem töltődne be) */
     --font: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+    --display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif; /* címsorokhoz */
 }
 
+
+/* ==========================================================================
+   2. ALAPBEÁLLÍTÁSOK (reset és alap elemstílusok)
+   ========================================================================== */
+
+/* A padding és a border beleszámít az elem szélességébe: kiszámíthatóbb méretezés */
 * {
     box-sizing: border-box;
 }
 
+/* Mobilon (iOS) megakadályozza a betűméret automatikus felnagyítását fekvő tájolásnál */
 html {
     -webkit-text-size-adjust: 100%;
 }
@@ -29,9 +52,10 @@ body {
     margin: 0;
     background: var(--paper);
     color: var(--ink);
-    font: 16px/1.5 var(--font);
+    font: 16px/1.5 var(--font);  /* rövidített font: méret / sormagasság / betűcsalád */
 }
 
+/* Címsorok: egységes display betűtípus, szűkített betűköz */
 h1,
 h2,
 h3 {
@@ -57,6 +81,8 @@ p {
     margin: 0;
 }
 
+/* Az űrlapelemek örököljék a környező szöveg betűtípusát és színét
+   (alapból a böngésző saját stílusát használnák) */
 button,
 input,
 select {
@@ -68,15 +94,23 @@ a {
     color: var(--accent);
 }
 
+/* Billentyűzetes navigációnál jól látható fókuszkeret (akadálymentesség) */
 :focus-visible {
     outline: 3px solid var(--accent);
     outline-offset: 2px;
 }
 
+
+/* ==========================================================================
+   3. SEGÉDOSZTÁLYOK
+   ========================================================================== */
+
+/* Halványabb szöveg */
 .muted {
     color: var(--muted);
 }
 
+/* "Screen reader only": vizuálisan rejtett, de a képernyőolvasó felolvassa */
 .sr {
     position: absolute;
     width: 1px;
@@ -85,8 +119,13 @@ a {
     clip: rect(0 0 0 0);
 }
 
+
+/* ==========================================================================
+   4. GOMBOK
+   Alap .btn + módosítók: .primary, .danger, .ghost, .sm
+   ========================================================================== */
 .btn {
-    display: inline-flex;
+    display: inline-flex;       /* ikon és szöveg egymás mellett, középre igazítva */
     align-items: center;
     justify-content: center;
     gap: .5rem;
@@ -96,7 +135,7 @@ a {
     padding: .6rem 1rem;
     font-weight: 600;
     cursor: pointer;
-    text-decoration: none;
+    text-decoration: none;      /* <a> elemként használva se legyen aláhúzva */
     color: var(--ink);
     transition: background .15s, border-color .15s;
 }
@@ -105,6 +144,7 @@ a {
     border-color: var(--ink-2);
 }
 
+/* Elsődleges (kiemelt) gomb */
 .btn.primary {
     background: var(--accent);
     border-color: var(--accent);
@@ -112,29 +152,39 @@ a {
 }
 
 .btn.primary:hover {
-    background: #0b6759;
+    background: #0b6759;        /* sötétebb accent hovernél */
 }
 
+/* Veszélyes művelet (pl. törlés) */
 .btn.danger {
     background: var(--expense);
     border-color: var(--expense);
     color: #fff;
 }
 
+/* Átlátszó hátterű gomb */
 .btn.ghost {
     background: transparent;
 }
 
+/* Kisebb gomb */
 .btn.sm {
     padding: .35rem .7rem;
     font-size: .875rem;
 }
 
+/* Letiltott / folyamatban lévő állapot (a "wait" kurzor töltést jelez) */
 .btn:disabled {
     opacity: .6;
     cursor: wait;
 }
 
+
+/* ==========================================================================
+   5. ŰRLAPOK
+   ========================================================================== */
+
+/* A label és a mezője egymás alatt, kis térközzel */
 label {
     display: grid;
     gap: .35rem;
@@ -149,7 +199,7 @@ select {
     border: 1px solid var(--line);
     border-radius: var(--r-sm);
     background: #fff;
-    font-weight: 400;
+    font-weight: 400;           /* a label félkövér stílusát ne örökölje */
 }
 
 input:focus,
@@ -157,35 +207,43 @@ select:focus {
     border-color: var(--accent);
 }
 
+/* Hibás mező jelölése */
 .input-error {
     border-color: var(--expense);
 }
 
+/* Hibaüzenet; a min-height megakadályozza, hogy a layout ugorjon, ha megjelenik */
 .err {
     color: var(--expense);
     font-size: .9rem;
     min-height: 1.3em;
 }
 
+
+/* ==========================================================================
+   6. BEJELENTKEZŐ / REGISZTRÁCIÓS OLDAL
+   Kétoszlopos elrendezés: bal oldalt sötét márkapanel, jobbra az űrlap.
+   ========================================================================== */
 .auth {
     display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);  /* kb. 45% / 55% arány */
     min-height: 100vh;
 }
 
+/* Bal oldali sötét panel */
 .auth-side {
     background: var(--ink);
     color: #e9f1ef;
     padding: 3rem;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-between;  /* logó fent, szöveg lent */
     gap: 2rem;
 }
 
 .auth-side h2 {
     font-size: 2.3rem;
-    max-width: 14ch;
+    max-width: 14ch;            /* ch = karakterszélesség: szép sortörés a címben */
     color: #fff;
 }
 
@@ -195,6 +253,7 @@ select:focus {
     margin-top: 1rem;
 }
 
+/* Jobb oldal: az űrlap középre igazítva */
 .auth-main {
     display: grid;
     place-items: center;
@@ -202,7 +261,7 @@ select:focus {
 }
 
 .auth-form {
-    width: min(400px, 100%);
+    width: min(400px, 100%);    /* legfeljebb 400px, kisebb kijelzőn teljes szélesség */
     display: grid;
     gap: 1rem;
 }
@@ -211,11 +270,16 @@ select:focus {
     margin-bottom: .25rem;
 }
 
+/* "Már van fiókod?" jellegű link/szöveg */
 .auth-form .alt {
     margin-top: .5rem;
     color: var(--muted);
 }
 
+
+/* ==========================================================================
+   7. MÁRKA / LOGÓ
+   ========================================================================== */
 .brand {
     display: flex;
     align-items: center;
@@ -225,6 +289,7 @@ select:focus {
     font-size: 1.2rem;
 }
 
+/* Az <i> elem itt a logó négyzetes, lekerekített háttere */
 .brand i {
     width: 30px;
     height: 30px;
@@ -234,18 +299,25 @@ select:focus {
     place-items: center;
 }
 
+/* Az SVG ikon a háttéren belül */
 .brand svg {
     width: 18px;
     height: 18px;
     stroke: #fff;
 }
 
+
+/* ==========================================================================
+   8. ALKALMAZÁS KERET (shell) ÉS OLDALSÁV
+   Bal oldalt fix szélességű oldalsáv, mellette a tartalom.
+   ========================================================================== */
 .shell {
     display: grid;
-    grid-template-columns: 248px minmax(0, 1fr);
+    grid-template-columns: 248px minmax(0, 1fr);  /* fix sáv + rugalmas tartalom */
     min-height: 100vh;
 }
 
+/* Oldalsáv: görgetéskor is a helyén marad (sticky) és kitölti a magasságot */
 .side {
     background: var(--ink);
     color: #cfdedb;
@@ -263,11 +335,13 @@ select:focus {
     padding: 0 .5rem;
 }
 
+/* Navigációs menü */
 .nav {
     display: grid;
     gap: .25rem;
 }
 
+/* A menüpont lehet link (<a>) vagy gomb (<button>), ugyanúgy néz ki */
 .nav a,
 .nav button {
     display: flex;
@@ -290,15 +364,17 @@ select:focus {
     background: var(--ink-2);
 }
 
+/* Az aktuális oldal menüpontja kiemelve (aria-current="page" attribútum alapján) */
 .nav a[aria-current="page"] {
     background: var(--accent);
     color: #fff;
 }
 
+/* Menüikonok: vonalas (outline) stílus, a szöveg színét öröklik */
 .nav svg {
     width: 20px;
     height: 20px;
-    flex: none;
+    flex: none;                 /* ne zsugorodjon össze */
     stroke: currentColor;
     fill: none;
     stroke-width: 1.8;
@@ -306,6 +382,7 @@ select:focus {
     stroke-linejoin: round;
 }
 
+/* Felhasználói blokk az oldalsáv alján (margin-top: auto lenyomja az aljára) */
 .side .who {
     margin-top: auto;
     padding: .75rem;
@@ -318,12 +395,17 @@ select:focus {
     color: #fff;
 }
 
+
+/* ==========================================================================
+   9. FŐ TARTALOM ÉS OLDALFEJLÉC
+   ========================================================================== */
 .main {
-    padding: 2rem clamp(1rem, 3vw, 2.5rem) 3rem;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem) 3rem;  /* oldalsó padding a képernyővel skálázódik */
     max-width: 1180px;
     width: 100%;
 }
 
+/* Oldalfejléc: cím balra, műveletek jobbra, szűk helyen törik a sort */
 .top {
     display: flex;
     align-items: flex-end;
@@ -337,6 +419,10 @@ select:focus {
     color: var(--muted);
 }
 
+
+/* ==========================================================================
+   10. KÁRTYÁK ÉS RÁCSOK (layout építőelemek)
+   ========================================================================== */
 .card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -344,37 +430,44 @@ select:focus {
     padding: 1.25rem;
 }
 
+/* A kártya címsora alatt egységes térköz (akár <header>-ben is van) */
 .card > h2,
 .card > header h2 {
     margin-bottom: 1rem;
 }
 
+/* Általános rács + oszlopkonfigurációk */
 .grid {
     display: grid;
     gap: 1rem;
 }
 
 .g2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));   /* 2 egyenlő oszlop */
 }
 
 .g3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));   /* 3 egyenlő oszlop */
 }
 
 .g-wide {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);  /* széles + keskeny oszlop (3:2) */
 }
 
+
+/* ==========================================================================
+   11. STATISZTIKAI KÁRTYÁK ÉS SZÍNEZÉS
+   ========================================================================== */
 .stat small {
     color: var(--muted);
     display: block;
 }
 
 .stat strong {
-    font: 700 1.6rem/1.2 var(--display);
+    font: 700 1.6rem/1.2 var(--display);   /* nagy, kiemelt szám */
 }
 
+/* Bevétel / kiadás színezés (szövegre) */
 .income {
     color: var(--income);
 }
@@ -383,12 +476,16 @@ select:focus {
     color: var(--expense);
 }
 
+
+/* ==========================================================================
+   12. HERO KÁRTYA (a főoldal kiemelt egyenleg-blokkja)
+   ========================================================================== */
 .hero {
     background: var(--ink);
     color: #fff;
     border: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);  /* bal: egyenleg, jobb: arány */
     gap: 2rem;
     align-items: center;
     padding: 1.75rem;
@@ -398,12 +495,14 @@ select:focus {
     color: #a9c0bb;
 }
 
+/* Nagy egyenleg-szám: clamp() miatt a képernyővel arányosan nő (2rem – 3.2rem) */
 .hero .big {
     font: 700 clamp(2rem, 5vw, 3.2rem)/1.1 var(--display);
     letter-spacing: -.02em;
     margin-top: .25rem;
 }
 
+/* Bevétel/kiadás arányát mutató sáv: a háttér a kiadás, a belső span a bevétel */
 .split {
     height: 12px;
     border-radius: 99px;
@@ -413,6 +512,7 @@ select:focus {
     margin: .6rem 0;
 }
 
+/* A span szélességét inline style vagy JS állítja be (a bevétel %-a) */
 .split span {
     display: block;
     height: 100%;
@@ -427,6 +527,7 @@ select:focus {
     color: #cfdedb;
 }
 
+/* Sötét háttéren világosabb zöld/piros az olvashatóságért */
 .hero .income {
     color: #7fdcaa;
 }
@@ -435,12 +536,17 @@ select:focus {
     color: #ff9b86;
 }
 
+
+/* ==========================================================================
+   13. DIAGRAM (SVG oszlopdiagram) ÉS LEGENDA
+   ========================================================================== */
 .chart {
     width: 100%;
     height: auto;
     display: block;
 }
 
+/* Oszlopok: .bi = bevétel, .be = kiadás */
 .chart .bi {
     fill: var(--income);
 }
@@ -449,16 +555,19 @@ select:focus {
     fill: var(--expense);
 }
 
+/* Tengelyfeliratok */
 .chart text {
     fill: var(--muted);
     font-size: 12px;
     font-family: var(--font);
 }
 
+/* Rácsvonalak */
 .chart line {
     stroke: var(--line);
 }
 
+/* Jelmagyarázat a diagram alatt */
 .legend {
     display: flex;
     gap: 1rem;
@@ -467,6 +576,7 @@ select:focus {
     margin-top: .5rem;
 }
 
+/* Kis színes négyzet a legenda elemei előtt */
 .legend i {
     display: inline-block;
     width: 10px;
@@ -475,6 +585,11 @@ select:focus {
     margin-right: .35rem;
 }
 
+
+/* ==========================================================================
+   14. TRANZAKCIÓLISTA
+   Egy sor: [ikon] [név + részletek] [összeg] [műveletek]
+   ========================================================================== */
 .list {
     list-style: none;
     margin: 0;
@@ -487,13 +602,15 @@ select:focus {
     gap: .9rem;
     align-items: center;
     padding: .8rem 0;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--line);   /* elválasztó vonal a sorok között */
 }
 
+/* Az első sor fölött ne legyen vonal */
 .list > .tx:first-child {
     border-top: 0;
 }
 
+/* Kör alakú ikon a sor elején */
 .dot {
     width: 36px;
     height: 36px;
@@ -511,15 +628,18 @@ select:focus {
     background: var(--expense-soft);
 }
 
+/* Hosszú szöveg törése a részletek között */
 .tx-main small span {
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
+/* min-width: 0 kell, hogy a grid cellában a szöveg levágható legyen */
 .tx-main {
     min-width: 0;
 }
 
+/* A tranzakció neve egy sorban, túl hosszú esetén "…"-tal levágva */
 .tx-main strong {
     display: block;
     overflow: hidden;
@@ -527,6 +647,7 @@ select:focus {
     white-space: nowrap;
 }
 
+/* Alsó, halvány részletsor (dátum, kategória stb.) */
 .tx-main small {
     color: var(--muted);
     display: flex;
@@ -534,16 +655,22 @@ select:focus {
     flex-wrap: wrap;
 }
 
+/* Összeg: sosem tör több sorba */
 .amt {
     font-weight: 700;
     white-space: nowrap;
 }
 
+/* Szerkesztés / törlés gombok */
 .row-actions {
     display: flex;
     gap: .4rem;
 }
 
+
+/* ==========================================================================
+   15. KATEGÓRIA-SÁVOK (kiadások megoszlása)
+   ========================================================================== */
 .bars {
     display: grid;
     gap: .9rem;
@@ -554,12 +681,14 @@ select:focus {
     gap: .25rem;
 }
 
+/* Felső sor: kategórianév balra, összeg jobbra */
 .bars span {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
 }
 
+/* A sáv maga; a szélességet inline style vagy JS adja meg */
 .bars i {
     display: block;
     height: 8px;
@@ -567,6 +696,12 @@ select:focus {
     background: var(--expense);
 }
 
+
+/* ==========================================================================
+   16. ÜRES ÁLLAPOT ÉS JELVÉNY
+   ========================================================================== */
+
+/* Akkor jelenik meg, ha még nincs adat */
 .empty {
     text-align: center;
     padding: 2.5rem 1rem;
@@ -580,6 +715,7 @@ select:focus {
     max-width: 40ch;
 }
 
+/* Kis, kapszula alakú címke */
 .badge {
     display: inline-block;
     background: var(--accent-soft);
@@ -590,6 +726,10 @@ select:focus {
     font-weight: 700;
 }
 
+
+/* ==========================================================================
+   17. SZEGMENTÁLT VÁLASZTÓ (radio gombokból, pl. Bevétel / Kiadás)
+   ========================================================================== */
 .seg {
     display: inline-flex;
     border: 1px solid var(--line);
@@ -609,6 +749,7 @@ select:focus {
     cursor: pointer;
 }
 
+/* A valódi radio input láthatatlan, de elérhető marad billentyűzettel */
 .seg input {
     position: absolute;
     opacity: 0;
@@ -616,16 +757,22 @@ select:focus {
     width: 1px;
 }
 
+/* A kiválasztott opció sötét hátteret kap */
 .seg input:checked + span {
     background: var(--ink);
     color: #fff;
 }
 
+/* Fókuszjelzés billentyűzetes használatnál (belül, hogy ne vágja le az overflow) */
 .seg input:focus-visible + span {
     outline: 3px solid var(--accent);
     outline-offset: -3px;
 }
 
+
+/* ==========================================================================
+   18. ESZKÖZTÁR (szűrők, keresés a listák fölött)
+   ========================================================================== */
 .toolbar {
     display: flex;
     gap: .75rem;
@@ -634,10 +781,17 @@ select:focus {
     margin-bottom: 1rem;
 }
 
+/* A select ne nyúljon teljes szélességűre az eszköztárban */
 .toolbar select {
     width: auto;
 }
 
+
+/* ==========================================================================
+   19. CSALÁD / TAGOK OLDAL
+   ========================================================================== */
+
+/* Családazonosító kód, szellős betűközzel */
 .famid {
     font: 700 1.4rem var(--display);
     letter-spacing: .06em;
@@ -660,6 +814,7 @@ select:focus {
     border-top: 0;
 }
 
+/* Kör alakú avatar (általában a név kezdőbetűjével) */
 .avatar {
     width: 36px;
     height: 36px;
@@ -672,6 +827,12 @@ select:focus {
     flex: none;
 }
 
+
+/* ==========================================================================
+   20. NAPTÁR
+   ========================================================================== */
+
+/* Fejléc: előző / aktuális hónap / következő */
 .cal-head {
     display: flex;
     align-items: center;
@@ -680,17 +841,19 @@ select:focus {
 }
 
 .cal-head h2 {
-    text-transform: capitalize;
-    min-width: 10ch;
+    text-transform: capitalize;   /* a hónapnév kezdőbetűje nagy legyen */
+    min-width: 10ch;              /* a hónapnév hossza ne mozgassa a nyilakat */
     text-align: center;
 }
 
+/* 7 oszlopos rács = a hét napjai */
 .cal {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
 }
 
+/* A hét napjainak rövidítései (H, K, Sze…) */
 .cal .dow {
     text-align: center;
     font-size: .8rem;
@@ -698,6 +861,7 @@ select:focus {
     padding: .25rem 0;
 }
 
+/* Egy naptári nap */
 .day {
     min-height: 84px;
     border: 1px solid var(--line);
@@ -717,6 +881,7 @@ select:focus {
     border-color: var(--ink-2);
 }
 
+/* Más hónaphoz tartozó (üres) cellák: szaggatott, halvány, nem kattintható */
 .day.off {
     background: transparent;
     border-style: dashed;
@@ -724,16 +889,19 @@ select:focus {
     opacity: .5;
 }
 
+/* A mai nap száma színes körben */
 .day.today b {
     background: var(--accent);
     color: #fff;
 }
 
+/* A kiválasztott nap kiemelt kerettel */
 .day.sel {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent);
 }
 
+/* A nap száma */
 .day b {
     width: 24px;
     height: 24px;
@@ -743,6 +911,7 @@ select:focus {
     font-size: .85rem;
 }
 
+/* A napon belüli bevétel (.i) és kiadás (.e) összegek */
 .day .i {
     color: var(--income);
     font-weight: 700;
@@ -753,15 +922,20 @@ select:focus {
     font-weight: 700;
 }
 
+
+/* ==========================================================================
+   21. PÁRBESZÉDABLAK (<dialog>)
+   ========================================================================== */
 dialog {
     border: 0;
     border-radius: var(--r);
     padding: 1.5rem;
-    width: min(440px, calc(100% - 2rem));
+    width: min(440px, calc(100% - 2rem));   /* mobilon is marad 1rem margó oldalt */
     box-shadow: 0 24px 60px rgba(20, 38, 45, .3);
     color: var(--ink);
 }
 
+/* A dialógus mögötti sötétített réteg */
 dialog::backdrop {
     background: rgba(20, 38, 45, .55);
 }
@@ -775,6 +949,7 @@ dialog h2 {
     margin-bottom: .25rem;
 }
 
+/* Gombsor a dialógus alján, jobbra igazítva */
 .actions {
     display: flex;
     justify-content: flex-end;
@@ -782,6 +957,12 @@ dialog h2 {
     flex-wrap: wrap;
 }
 
+
+/* ==========================================================================
+   22. ÉRTESÍTÉSEK (toast üzenetek)
+   ========================================================================== */
+
+/* Jobb alsó sarokban, minden más fölött (z-index) */
 .toasts {
     position: fixed;
     right: 1rem;
@@ -799,10 +980,17 @@ dialog h2 {
     box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
 }
 
+/* Hibaüzenet változat */
 .toast.bad {
     background: var(--expense);
 }
 
+
+/* ==========================================================================
+   23. RESZPONZÍV MEGJELENÉS
+   ========================================================================== */
+
+/* --- Tablet (max. 980px): a kétoszlopos elrendezések egymás alá kerülnek --- */
 @media (max-width: 980px) {
     .g-wide,
     .hero {
@@ -810,14 +998,17 @@ dialog h2 {
     }
 }
 
+/* --- Mobil (max. 860px): az oldalsáv alsó navigációs sávvá alakul --- */
 @media (max-width: 860px) {
+    /* Egyoszlopos keret */
     .shell {
         grid-template-columns: 1fr;
     }
 
+    /* Oldalsáv -> képernyő aljára rögzített sáv (a safe-area az iPhone alsó sávja miatt kell) */
     .side {
         position: fixed;
-        inset: auto 0 0 0;
+        inset: auto 0 0 0;        /* bottom, left, right = 0; top = auto */
         height: auto;
         flex-direction: row;
         padding: .4rem .5rem calc(.4rem + env(safe-area-inset-bottom, 0px));
@@ -826,17 +1017,20 @@ dialog h2 {
         border-top: 1px solid var(--ink-2);
     }
 
+    /* Logó és felhasználói blokk mobilon elrejtve */
     .side .brand,
     .side .who {
         display: none;
     }
 
+    /* A menüpontok egyenletesen elosztva egy sorban */
     .nav {
         display: flex;
         width: 100%;
         justify-content: space-around;
     }
 
+    /* Ikon a felirat fölött, kisebb betűvel */
     .nav a,
     .nav button {
         flex-direction: column;
@@ -847,10 +1041,12 @@ dialog h2 {
         text-align: center;
     }
 
+    /* Alul hely a fix navigációs sávnak, hogy ne takarja el a tartalmat */
     .main {
         padding-bottom: 6rem;
     }
 
+    /* Bejelentkező oldal egyoszlopos, kompaktabb márkapanellel */
     .auth {
         grid-template-columns: 1fr;
     }
@@ -867,29 +1063,39 @@ dialog h2 {
         display: none;
     }
 
+    /* 2 és 3 oszlopos rácsok egy oszlopba */
     .g3,
     .g2 {
         grid-template-columns: 1fr;
     }
 
+    /* Tranzakciósor: a műveletek külön sorba kerülnek */
     .tx {
         grid-template-columns: auto minmax(0, 1fr) auto;
     }
 
     .row-actions {
-        grid-column: 2 / -1;
+        grid-column: 2 / -1;      /* a 2. oszloptól az utolsóig nyúlik */
     }
 
+    /* Kisebb naptárcellák */
     .day {
         min-height: 62px;
         padding: .25rem;
     }
 
+    /* A toast feljebb, hogy ne takarja az alsó navigációt */
     .toasts {
         bottom: 5rem;
     }
 }
 
+
+/* ==========================================================================
+   24. HOZZÁFÉRHETŐSÉG: csökkentett mozgás
+   Ha a felhasználó az operációs rendszerében kikapcsolta az animációkat,
+   az átmeneteket is letiltjuk.
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
     * {
         transition: none !important;
